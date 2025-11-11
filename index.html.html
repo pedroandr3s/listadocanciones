@@ -145,6 +145,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 15px;
         }
 
         .video-item:hover {
@@ -157,32 +158,65 @@
             transform: scale(0.95);
         }
 
-        .video-item-content {
+        .video-item-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             flex: 1;
         }
 
+        .video-thumbnail-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .video-thumbnail {
+            width: 120px;
+            height: 68px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: block;
+        }
+
         .video-number {
-            display: inline-block;
-            background: #667eea;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(102, 126, 234, 0.9);
             color: white;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             text-align: center;
-            line-height: 30px;
-            margin-right: 15px;
+            line-height: 28px;
             font-weight: 600;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-item-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .video-item-title {
             font-weight: 600;
             color: #333;
             margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .video-item-url {
             font-size: 12px;
             color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .delete-btn {
@@ -304,8 +338,12 @@
                     throw new Error('Video no encontrado');
                 }
 
-                // Retornar el título real del video
-                return data.items[0].snippet.title;
+                // Retornar el título y la miniatura del video
+                const snippet = data.items[0].snippet;
+                return {
+                    title: snippet.title,
+                    thumbnail: snippet.thumbnails.medium.url // 320x180
+                };
 
             } catch (error) {
                 console.error('Error:', error);
@@ -327,13 +365,17 @@
             fetchBtn.textContent = 'Cargando...';
 
             try {
-                const title = await fetchVideoTitle(url);
-                
-                currentVideo = { url, title };
-                previewTitle.textContent = title;
+                const videoData = await fetchVideoTitle(url);
+
+                currentVideo = {
+                    url,
+                    title: videoData.title,
+                    thumbnail: videoData.thumbnail
+                };
+                previewTitle.textContent = videoData.title;
                 previewUrl.textContent = url;
                 videoPreview.classList.add('show');
-                
+
                 fetchBtn.textContent = 'Obtener Título';
                 fetchBtn.disabled = false;
             } catch (error) {
@@ -373,12 +415,17 @@
                 item.className = 'video-item';
                 item.draggable = true;
                 item.dataset.index = index;
-                
+
                 item.innerHTML = `
-                    <div class="video-item-content">
-                        <span class="video-number">${index + 1}</span>
-                        <span class="video-item-title">${video.title}</span>
-                        <div class="video-item-url">${video.url}</div>
+                    <div class="video-item-left">
+                        <div class="video-thumbnail-container">
+                            <img src="${video.thumbnail}" alt="Miniatura" class="video-thumbnail">
+                            <span class="video-number">${index + 1}</span>
+                        </div>
+                        <div class="video-item-content">
+                            <div class="video-item-title">${video.title}</div>
+                            <div class="video-item-url">${video.url}</div>
+                        </div>
                     </div>
                     <button class="delete-btn" onclick="deleteVideo(${index})">Eliminar</button>
                 `;
